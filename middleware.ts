@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export function middleware(req: any) {
-  // placeholder: aggiungerai controllo ruolo
+export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: ["/dashboard/:path*"],
+};
