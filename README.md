@@ -1,0 +1,2 @@
+# fantasquad
+FantaSquad Manager
