@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+
+  role  Role @default(USER)
+}
+
+enum Role {
+  ADMIN
+  MARKET
+  VALUE_MANAGER
+  ROSTER_MANAGER
+  USER
+}
+
+model Team {
+  id     String @id @default(cuid())
+  name   String
+  budget Float  @default(0)
+
+  players PlayerOwnership[]
+}
+
+model Player {
+  id              String   @id @default(cuid())
+  name            String
+  dateOfBirth     DateTime
+  transfermarktId String?
+  currentValue    Float?
+
+  ownerships PlayerOwnership[]
+}
+
+model PlayerOwnership {
+  id        String   @id @default(cuid())
+  playerId  String
+  teamId    String
+
+  startDate DateTime @default(now())
+  endDate   DateTime?
+
+  contractType ContractType @default(PERMANENT)
+
+  originTeamId String?
+  loanId       String?
+
+  player Player @relation(fields: [playerId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+}
+
+enum ContractType {
+  PERMANENT
+  LOAN
+}
+
+model Renewal {
+  id          String @id @default(cuid())
+  ownershipId String
+  season      String
+
+  playerValue Float
+  renewalCost Float
+  isFree      Boolean
+
+  ownership PlayerOwnership @relation(fields: [ownershipId], references: [id])
+
+  @@unique([ownershipId, season])
+}
+
+model Loan {
+  id           String @id @default(cuid())
+  playerId     String
+  fromTeamId   String
+  toTeamId     String
+  season       String
+
+  isObligation Boolean
+  hasOption    Boolean
+  notes        String?
+
+  createdAt DateTime @default(now())
+}
+
+model TradeProposal {
+  id         String @id @default(cuid())
+  proposerId String
+  receiverId String
+
+  status TradeStatus @default(PENDING)
+
+  season String
+  notes  String?
+
+  createdAt   DateTime @default(now())
+  confirmedAt DateTime?
+
+  items TradeItem[]
+}
+
+model TradeItem {
+  id         String @id @default(cuid())
+  tradeId    String
+
+  fromTeamId String
+  toTeamId   String
+
+  playerId   String?
+  cashAmount Float?
+
+  type TradeItemType
+
+  trade TradeProposal @relation(fields: [tradeId], references: [id])
+}
+
+enum TradeStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum TradeItemType {
+  PLAYER
+  CASH
+}
